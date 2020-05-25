@@ -23,6 +23,7 @@ export default class ImageEdit extends Component {
     image: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
     width: PropTypes.number,
     height: PropTypes.number,
+    minWidth: PropTypes.number,
     scaled: PropTypes.bool,
     editing: PropTypes.bool,
     showEditButton: PropTypes.bool,
@@ -59,7 +60,8 @@ export default class ImageEdit extends Component {
     gridColor: this.defaultColor,
     buttonsColor: this.defaultColor,
     saveButtonText: "Save",
-    cancelButtonText: "Cancel"
+    cancelButtonText: "Cancel",
+    minWidth: 500
   };
 
   static imageDefaults = {
@@ -83,7 +85,10 @@ export default class ImageEdit extends Component {
       editing: this.props.editing,
       editingProp: this.props.editing,
       isPinching: false,
-      isMoving: false
+      isMoving: false,
+      scale: null,
+      original_width: null,
+      original_height: null
     };
 
     this.defaultColor = "#C1272D";
@@ -140,7 +145,7 @@ export default class ImageEdit extends Component {
             uri,
             (w, h) => {
               let sd = ImageEdit.scaledDimensions({width: this.state.width, height: this.state.height}, {width: w, height: h});
-              this.setState({image: { ...this.state.image, width: sd.width, height: sd.height }});
+              this.setState({image: { ...this.state.image, width: sd.width, height: sd.height, scale: sd.scale, original_width: sd.original_width, original_height: sd.original_height}});
             },
             () => {}
         );
@@ -182,8 +187,11 @@ export default class ImageEdit extends Component {
     }
 
     return {
+      original_width: width,
+      original_height: height,
       width: new_iw,
-      height: new_ih
+      height: new_ih,
+      scale: new_iw/width
     }
   }
 
@@ -232,6 +240,9 @@ export default class ImageEdit extends Component {
         let sd = ImageEdit.scaledDimensions({width: w, height: h}, {width: image.width, height: image.height});
         image.width = sd.width;
         image.height = sd.height;
+        image.scale = sd.scale;
+        image.original_height = sd.original_height;
+        image.original_width = sd.original_width;
       }
 
       info.image = image;
@@ -274,6 +285,18 @@ export default class ImageEdit extends Component {
     this.distance = 0;
   }
 
+  getRealSizeZoom(info, new_ih, new_iw) {
+    var original_width = info.image.original_width;
+    var original_height = info.image.original_height;
+    var h_ratio = new_ih/this.props.width;
+    var w_ratio = new_iw/this.props.width;
+
+    return {
+      width: original_width / w_ratio,
+      height: original_height / h_ratio
+    }
+  }
+
   onMove(e, gestureState) {
     e.persist();
     if (!this.state.editing) return;
@@ -302,6 +325,7 @@ export default class ImageEdit extends Component {
           //Keep the image size >= to crop area
           let new_iw = info.image.width,
               new_ih = info.image.height;
+
           if (this.state.width > info.image.width) {
             new_iw = this.state.width;
             new_ih = (new_iw * this.initH) / this.initW;
@@ -312,6 +336,12 @@ export default class ImageEdit extends Component {
             new_iw = (new_ih * this.initW) / this.initH;
           }
 
+          var real_size = this.getRealSizeZoom(info, new_ih, new_iw);
+
+          if(real_size.width < this.props.minWidth) {
+            return false;
+          }
+          
           info.image.width = new_iw;
           info.image.height = new_ih;
 
@@ -337,6 +367,7 @@ export default class ImageEdit extends Component {
 
       this.setState(info);
     } else if (e.nativeEvent.touches.length == 1) {
+
       //Moving
       if (this.state.isMoving) {
         let x = this.initX + gestureState.dx,
