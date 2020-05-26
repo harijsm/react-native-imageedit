@@ -70,7 +70,9 @@ export default class ImageEdit extends Component {
     width: 0,
     height: 0,
     x: 0,
-    y: 0
+    y: 0,
+    real_width: 0,
+    real_height: 0,
   };
 
   constructor(props) {
@@ -124,13 +126,18 @@ export default class ImageEdit extends Component {
   }
 
   getInfo() {
-    return {
-      area: {
-        width: this.state.width,
-        height: this.state.height
-      },
-      image: this.state.image
+    var naturalClickPosX = (this.state.image.original_width / this.state.image.width) * this.state.image.x;
+    var naturalClickPosY = (this.state.image.original_height / this.state.image.width) * this.state.image.y;
+
+    var data = {
+      filename: this.state.image.uri,
+      w: this.state.image.real_width,
+      h: this.state.image.real_height,
+      x: Math.abs(naturalClickPosX),
+      y: Math.abs(naturalClickPosY)
     };
+
+    return data;
   }
 
   componentDidUpdate(){
@@ -145,7 +152,23 @@ export default class ImageEdit extends Component {
             uri,
             (w, h) => {
               let sd = ImageEdit.scaledDimensions({width: this.state.width, height: this.state.height}, {width: w, height: h});
-              this.setState({image: { ...this.state.image, width: sd.width, height: sd.height, scale: sd.scale, original_width: sd.original_width, original_height: sd.original_height}});
+              var real_width = sd.original_height;
+              var real_height = sd.original_height;
+
+              if(sd.original_height > sd.original_width) {
+                real_width = sd.original_width;
+                real_height = sd.original_width;
+              }
+              
+              this.setState({image: { ...this.state.image,
+                width: sd.width,
+                height: sd.height,
+                scale: sd.scale,
+                original_width: sd.original_width,
+                original_height: sd.original_height,
+                real_width: real_width,
+                real_height: real_height
+              }});
             },
             () => {}
         );
@@ -243,6 +266,14 @@ export default class ImageEdit extends Component {
         image.scale = sd.scale;
         image.original_height = sd.original_height;
         image.original_width = sd.original_width;
+
+        image.real_width = sd.original_height;
+        image.real_height = sd.original_height;
+
+        if(sd.original_height > sd.original_width) {
+          image.real_width = sd.original_width;
+          image.real_height = sd.original_width;
+        }
       }
 
       info.image = image;
@@ -344,6 +375,10 @@ export default class ImageEdit extends Component {
           
           info.image.width = new_iw;
           info.image.height = new_ih;
+
+          info.image.real_width = real_size.width;
+          info.image.real_height = real_size.width;
+
 
           //position
           let x = this.state.image.x;
