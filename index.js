@@ -698,7 +698,8 @@ export default class ImageEdit extends Component {
 
 const styles = StyleSheet.create({
   wrapper: {
-    position: "relative"
+    position: "relative",
+    height: '100%',
   },
   cropArea: {
     backgroundColor: "#000000",
