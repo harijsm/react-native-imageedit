@@ -12,7 +12,6 @@ import {
 import { Icon } from "react-native-elements";
 import resolveAssetSource from "react-native/Libraries/Image/resolveAssetSource";
 import PropTypes from "prop-types";
-import Video from 'react-native-video';
 
 const window = Dimensions.get("window");
 const WW = window.width;
@@ -73,6 +72,7 @@ export default class ImageEdit extends Component {
     y: 0,
     real_width: 0,
     real_height: 0,
+    rotate: 0
   };
 
   constructor(props) {
@@ -88,9 +88,6 @@ export default class ImageEdit extends Component {
       editingProp: this.props.editing,
       isPinching: false,
       isMoving: false,
-      scale: null,
-      original_width: null,
-      original_height: null
     };
 
     this.defaultColor = "#C1272D";
@@ -125,16 +122,69 @@ export default class ImageEdit extends Component {
     return this._panResponder;
   }
 
+  rotate(val) {
+    var rotate = this.state.image.rotate;
+    rotate += val;
+
+    if(rotate < -270 || rotate > 270) {
+      rotate = 0;
+    }
+
+    this.setState({
+      image: {
+        ...this.state.image,
+        rotate: rotate,
+      }
+    });
+  }
+
   getInfo() {
-    var naturalClickPosX = (this.state.image.original_width / this.state.image.width) * this.state.image.x;
-    var naturalClickPosY = (this.state.image.original_height / this.state.image.width) * this.state.image.y;
+    var rotate = this.state.image.rotate;
+
+    if(rotate == -270) {
+      rotate = 90;
+    }
+
+    if(rotate == -180) {
+      rotate = 180;
+    }
+
+    if(rotate == -90) {
+      rotate = 270;
+    }
+
+    var x1 = (this.state.image.original_width / this.state.image.width) * this.state.image.x;
+    var y1 = (this.state.image.original_height / this.state.image.height) * this.state.image.y;
+
+
+    var x = x1;
+    var y = y1;
+
+    if(rotate == 180) {
+      y = y1 + this.state.image.original_height - parseFloat(this.state.image.real_height).toPrecision(5);
+      x = x1 + this.state.image.original_width - parseFloat(this.state.image.real_width).toPrecision(5);
+    }
+
+    if(rotate == 90) {
+      y = x1;
+      x = this.state.image.original_height - parseFloat(this.state.image.real_height).toPrecision(5) - Math.abs(y1); 
+    }
+
+    
+    if(rotate == 270) {
+      x = y1;
+      y = x1 + this.state.image.original_width - parseFloat(this.state.image.real_width).toPrecision(5);
+    }
+
+    var w = this.state.image.real_width;
 
     var data = {
-      filename: this.state.image.uri,
-      w: this.state.image.real_width,
-      h: this.state.image.real_height,
-      x: Math.abs(naturalClickPosX),
-      y: Math.abs(naturalClickPosY)
+      w: w,
+      h: w,
+      x: Math.abs(x),
+      y: Math.abs(y),
+      rotate: rotate,
+      filename: this.state.image.uri
     };
 
     return data;
@@ -145,7 +195,7 @@ export default class ImageEdit extends Component {
   }
 
   fixImageSize(){
-    if(this.state.image.uri && !this.state.image.width){
+    if(this.state.image.uri && (!this.state.image.width)) {
       let uri = this.state.image.uri;
       if(/^http/i.test(uri) || /^file:/.test(uri)){
         Image.getSize(
@@ -167,7 +217,8 @@ export default class ImageEdit extends Component {
                 original_width: sd.original_width,
                 original_height: sd.original_height,
                 real_width: real_width,
-                real_height: real_height
+                real_height: real_height,
+                rotate: (this.state.image.rotate ? this.state.image.rotate : 0)
               }});
             },
             () => {}
@@ -202,8 +253,8 @@ export default class ImageEdit extends Component {
         height = dim.height || 0;
 
     //Scale image size to the area
-    let new_iw = area.width;
-    let new_ih = (new_iw * height) / width;
+    var new_iw = area.width;
+    var new_ih = (new_iw * height) / width;
     if (new_ih < area.height) {
       new_ih = area.height;
       new_iw = (new_ih * width) / height;
@@ -319,6 +370,7 @@ export default class ImageEdit extends Component {
   getRealSizeZoom(info, new_ih, new_iw) {
     var original_width = info.image.original_width;
     var original_height = info.image.original_height;
+
     var h_ratio = new_ih/this.props.width;
     var w_ratio = new_iw/this.props.width;
 
@@ -338,6 +390,7 @@ export default class ImageEdit extends Component {
       let y1 = e.nativeEvent.touches[0].locationY;
       let x2 = e.nativeEvent.touches[1].locationX;
       let y2 = e.nativeEvent.touches[1].locationY;
+
       let a = x1 - x2;
       let b = y1 - y2;
       let dist = Math.sqrt(a * a + b * b);
@@ -377,7 +430,8 @@ export default class ImageEdit extends Component {
           info.image.height = new_ih;
 
           info.image.real_width = real_size.width;
-          info.image.real_height = real_size.width;
+          //info.image.real_height = real_size.width;
+          info.image.real_height = real_size.height;
 
 
           //position
@@ -405,8 +459,26 @@ export default class ImageEdit extends Component {
 
       //Moving
       if (this.state.isMoving) {
+
         let x = this.initX + gestureState.dx,
             y = this.initY + gestureState.dy;
+
+        if(this.state.image.rotate) {
+          if(this.state.image.rotate == 90 || this.state.image.rotate == -270) {
+            x = this.initX + gestureState.dy,
+            y = this.initY - gestureState.dx;
+          }
+
+          if(this.state.image.rotate == 180 || this.state.image.rotate == -180) {
+            x = this.initX - gestureState.dx;
+            y = this.initY - gestureState.dy;
+          }
+
+          if(this.state.image.rotate == 270 || this.state.image.rotate == -90) {
+            x = this.initX - gestureState.dy,
+            y = this.initY + gestureState.dx;
+          }
+        }
 
         if (!this.state.cropIn) {
           let maxx = -1 * Math.abs(this.state.image.width - this.state.width),
@@ -437,41 +509,21 @@ export default class ImageEdit extends Component {
   renderImage() {
     if (this.state.image.uri){
       let uri = this.state.image.path ? this.state.image.path : this.state.image.uri;
-      let style = {
-        width: this.state.image.width,
+      var style = {
+        width : this.state.image.width,
         height: this.state.image.height,
         top: this.state.image.y,
-        left: this.state.image.x
+        left: this.state.image.x,
       };
 
-      switch(this.state.image.type){
-        case 'image':
-          return (
-              <Image
-                  ref={ref => (this.image = ref)}
-                  style={style}
-                  source={{ uri: uri }}
-                  resizeMode={"stretch"}
-              />
-          );
-          break;
-        case 'video':
-          return (
-              <Video
-                  ref={(ref) => this.image = ref}
-                  source={{ uri: uri }}
-                  resizeMode={"stretch"}
-                  paused={false}
-                  fullscreen={false}
-                  controls={false}
-                  muted={true}
-                  repeat={true}
-                  style={style}
-              />
-          )
-          break;
-      }
-
+      return (
+          <Image
+              ref={ref => (this.image = ref)}
+              style={style}
+              source={{ uri: uri }}
+              resizeMode={"stretch"}
+          />
+      );
     }
   }
 
@@ -629,11 +681,13 @@ export default class ImageEdit extends Component {
                       ? this.props.backgroundColor
                       : this.defaultColor
                 },
-                this.props.areaStyle
+                this.props.areaStyle,
+                {transform: [{ rotate: this.state.image.rotate ? this.state.image.rotate+'deg' : '0deg' }]}
               ]}
           >
-            {this.renderImage()}
-            {this.renderGrids()}
+              {this.renderImage()}
+              {this.renderGrids()}
+
           </View>
           {this.renderChildren()}
           {this.renderButtons()}
