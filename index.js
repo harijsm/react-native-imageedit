@@ -7,7 +7,8 @@ import {
   PanResponder,
   ViewPropTypes,
   TouchableOpacity,
-  Text
+  Text,
+  ImageBackground
 } from "react-native";
 import { Icon } from "react-native-elements";
 import resolveAssetSource from "react-native/Libraries/Image/resolveAssetSource";
@@ -16,6 +17,7 @@ import PropTypes from "prop-types";
 const window = Dimensions.get("window");
 const WW = window.width;
 const WH = window.height;
+const MARGIN = 50;
 
 export default class ImageEdit extends Component {
   static propTypes = {
@@ -665,51 +667,197 @@ export default class ImageEdit extends Component {
 
   render() {
     let pr = this.getPanResponder();
+    var imgBgSrc = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk8AEAAFIATgDK/mEAAAAASUVORK5CYII=';
     return (
+      <View>
         <View style={[styles.wrapper, this.props.containerStyle]}>
-          <View
-              {...pr.panHandlers}
-              style={[
-                styles.cropArea,
-                {
-                  width: this.state.width,
-                  height: this.state.height,
-                  borderBottomWidth: !this.state.editing ? 0 : 0
-                },
-                {
-                  backgroundColor: this.props.backgroundColor
-                      ? this.props.backgroundColor
-                      : this.defaultColor
-                },
-                this.props.areaStyle,
-                {transform: [{ rotate: this.state.image.rotate ? this.state.image.rotate+'deg' : '0deg' }]}
-              ]}
-          >
-              {this.renderImage()}
-              {this.renderGrids()}
+          <View style={styles.cropAreaWrap}>
 
+                
+                <ImageBackground
+                    source={{uri:imgBgSrc}}
+                    resizeMode={'cover'}
+                    style={[styles.background, styles.cropAreaWrapTop]}
+                    blurRadius={90}
+                  ></ImageBackground>
+
+                  <ImageBackground
+                    source={{uri:imgBgSrc}}
+                    resizeMode={'cover'}
+                    style={[styles.background, styles.cropAreaWrapLeft]}
+                    blurRadius={90}
+                  ></ImageBackground>
+
+                  <ImageBackground
+                    source={{uri:imgBgSrc}}
+                    resizeMode={'cover'}
+                    style={[styles.background, styles.cropAreaWrapBottom]}
+                    blurRadius={90}
+                  ></ImageBackground>
+                
+                  <ImageBackground
+                      source={{uri:imgBgSrc}}
+                      resizeMode={'cover'}
+                      style={[styles.background, styles.cropAreaWrapRight]}
+                      blurRadius={90}
+                  ></ImageBackground>
+
+                  <ImageBackground
+                      source={{uri:imgBgSrc}}
+                      resizeMode={'cover'}
+                      style={[styles.background, styles.cropAreaCorner1]}
+                      blurRadius={90}
+                  ></ImageBackground>
+
+                  <ImageBackground
+                      source={{uri:imgBgSrc}}
+                      resizeMode={'cover'}
+                      style={[styles.background, styles.cropAreaCorner2]}
+                      blurRadius={90}
+                  ></ImageBackground>
+
+                  <ImageBackground
+                      source={{uri:imgBgSrc}}
+                      resizeMode={'cover'}
+                      style={[styles.background, styles.cropAreaCorner3]}
+                      blurRadius={90}
+                  ></ImageBackground>
+
+                  <ImageBackground
+                      source={{uri:imgBgSrc}}
+                      resizeMode={'cover'}
+                      style={[styles.background, styles.cropAreaCorner4]}
+                      blurRadius={90}
+                  ></ImageBackground>
+                
+
+              <View
+                  {...pr.panHandlers}
+                  style={[
+                    styles.cropArea,
+                    {
+                      width: this.state.width,
+                      height: this.state.height,
+                      borderBottomWidth: !this.state.editing ? 0 : 0
+                    },
+                    {
+                      backgroundColor: this.props.backgroundColor
+                          ? this.props.backgroundColor
+                          : this.defaultColor
+                    },
+                    this.props.areaStyle,
+                    {transform: [{ rotate: this.state.image.rotate ? this.state.image.rotate+'deg' : '0deg' }]}
+                  ]}
+              >
+                  {this.renderImage()}
+                  {this.renderGrids()}
+
+              </View>
           </View>
           {this.renderChildren()}
           {this.renderButtons()}
         </View>
+      </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
+  background: {
+    width: 'auto',
+    height: 'auto',
+    zIndex: 1
+  },
   wrapper: {
     position: "relative",
-    height: '100%',
+    height: '100%'
+  },
+  cropAreaWrap: {
+    overflow: "hidden",
+    position: "relative"
+  },
+  cropAreaWrapTop: {
+    position: "absolute",
+    top: 0,
+    left: MARGIN/2,
+    height: MARGIN/2,
+    width: WW-MARGIN,
+    zIndex: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ffffff"
+  },
+  cropAreaWrapBottom: {
+    position: "absolute",
+    top: WW-MARGIN/2,
+    left: MARGIN/2,
+    height: MARGIN/2,
+    width: WW-MARGIN,
+    zIndex: 1,
+    borderTopWidth: 1,
+    borderColor: "#ffffff"
+  },
+  cropAreaWrapLeft: {
+    position: "absolute",
+    top: MARGIN/2,
+    left: 0,
+    width: MARGIN/2,
+    height: WW-MARGIN,
+    zIndex: 2,
+    borderRightWidth: 1,
+    borderColor: "#ffffff"
+  },
+  cropAreaWrapRight: {
+    position: "absolute",
+    top: MARGIN/2,
+    left: WW-MARGIN/2,
+    width: MARGIN/2,
+    height: WW-MARGIN,
+    zIndex: 2,
+    borderLeftWidth: 1,
+    borderColor: "#ffffff"
+  },
+  cropAreaCorner1: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: MARGIN/2,
+    height: MARGIN/2,
+    zIndex: 2,
+  },
+  cropAreaCorner2: {
+    position: "absolute",
+    top: WW-MARGIN/2,
+    left: 0,
+    width: MARGIN/2,
+    height: MARGIN/2,
+    zIndex: 2,
+  },
+  cropAreaCorner3: {
+    position: "absolute",
+    top: WW-MARGIN/2,
+    left: WW-MARGIN/2,
+    width: MARGIN/2,
+    height: MARGIN/2,
+    zIndex: 2,
+  },
+  cropAreaCorner4: {
+    position: "absolute",
+    top: 0,
+    left: WW-MARGIN/2,
+    width: MARGIN/2,
+    height: MARGIN/2,
+    zIndex: 2,
   },
   cropArea: {
-    backgroundColor: "#000000",
     borderBottomWidth: 1,
     borderColor: "#000000",
     borderStyle: "solid",
     borderLeftWidth: 0,
     borderRightWidth: 0,
     borderTopWidth: 0,
-    overflow: "hidden"
+    marginLeft: MARGIN/2,
+    marginTop: MARGIN/2,
+    marginBottom: MARGIN/2,
   },
   grid: {
     position: "absolute",
