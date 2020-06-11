@@ -770,7 +770,6 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     position: "relative",
-    height: '100%'
   },
   cropAreaWrap: {
     overflow: "hidden",
