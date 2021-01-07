@@ -92,7 +92,7 @@ export default class ImageEdit extends Component {
       isMoving: false,
     };
 
-    this.defaultColor = "#C1272D";
+    this.defaultColor = "#000000";
     this.image = null;
     this.initW = 0;
     this.initH = 0;
@@ -517,6 +517,10 @@ export default class ImageEdit extends Component {
         top: this.state.image.y,
         left: this.state.image.x,
       };
+
+      if(typeof this.state.image.width == "undefined") {
+        this.fixImageSize();
+      }
 
       return (
           <Image
